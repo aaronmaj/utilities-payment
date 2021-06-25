@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:jaxrs="http://cxf.apache.org/jaxrs" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xmlns:jaxws="http://cxf.apache.org/jaxrs-client" xmlns:cxf="http://cxf.apache.org/core"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans  http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd http://cxf.apache.org/jaxrs-client http://cxf.apache.org/schemas/jaxrs-client.xsd http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd">
+    <import resource="classpath:META-INF/cxf/cxf.xml"/>
+    <context:property-placeholder/>
+    <context:annotation-config/>
+    <context:component-scan base-package="com.utility.payments.*"/>
+    <tx:annotation-driven/>
+        <jpa:repositories base-package="com.utility.payments.repository" entity-manager-factory-ref="entityManagerFactory2" transaction-manager-ref="transactionManager2"/>
+    <bean class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer"/>
+    <jaxrs:server id="billerService" address="/v1">
+        <jaxrs:serviceBeans>
+            <bean class="com.utility.payments.service.PaymentResource"/>
+            <bean class="com.utility.payments.service.CategoryService"/>
+            <bean class="com.utility.payments.service.AccountService"/>
+            <bean class="com.utility.payments.service.SubCategoryService"/>
+            <bean class="com.utility.payments.service.FieldService"/>
+        </jaxrs:serviceBeans>
+        <jaxrs:providers>
+            <bean class="org.codehaus.jackson.jaxrs.JacksonJsonProvider"/>
+            <bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
+                <property name="unmarshallAsJaxbElement" value="true"/>
+                <property name="marshallAsJaxbElement" value="true"/>
+            </bean>
+            <ref bean="messageTransformer"/>
+            <ref bean="jsonEntityTransformer"/>
+        </jaxrs:providers>
+    </jaxrs:server>
+    <cxf:bus>
+        <cxf:features>
+            <cxf:logging />
+        </cxf:features>
+    </cxf:bus>
+
+    <bean id="messageTransformer" class="com.utility.payments.providers.MessageTransformer"/>
+    <bean id="jsonEntityTransformer" class="com.utility.payments.providers.JsonEntityTransformer"/>
+
+    <bean id="entityManagerFactory2" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="packagesToScan" value="com.utility.payments.model"/>
+        <property name="jpaProperties">
+            <props>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+                <prop key= "hibernate.order_updates">true</prop>
+                <prop key="hibernate.c3p0.max_statements">100</prop>
+                <prop key="hibernate.c3p0.timeout">300</prop>
+                <prop key="hibernate.c3p0.max_size">20</prop>
+                <prop key="hibernate.c3p0.min_size">5</prop>
+                <prop key="hibernate.connection.release_mode">after_transaction</prop>
+                <prop key="hibernate.temp.use_jdbc_metadata_defaults">false</prop>
+                <prop key="hibernate.enable_lazy_load_no_trans">true</prop>
+            </props>
+        </property>
+        <property name="dataSource" ref="dataSource2"/>
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+                <property name="generateDdl" value="true"/>
+                <property name="showSql" value="true"/>
+                <property name="database" value="MYSQL"/>
+            </bean>
+        </property>
+    </bean>
+    <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"
+          id="PersistenceExceptionTranslator"/>
+    <bean id="transactionManager2" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory2"/>
+    </bean>
+
+</beans>
